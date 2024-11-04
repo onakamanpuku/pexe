@@ -15,3 +15,6 @@ Quick Powershell Executor
 ```
 PS > C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:winexe /win32icon:pexe.ico /out:pexe.exe pexe.cs
 ```
+
+# Run
+Click pexe.exe

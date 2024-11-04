@@ -1,4 +1,4 @@
-// csc /target:winexe /win32icon:_.ico /out:pexe.exe pexe.cs
+// csc /target:winexe /win32icon:pexe.ico /out:pexe.exe pexe.cs
 
 using System;
 using System.Linq;
