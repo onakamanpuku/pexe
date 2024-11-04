@@ -1,0 +1,2 @@
+# pexe
+Quick Powershell Executor
