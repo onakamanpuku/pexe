@@ -546,7 +546,7 @@ public class CmdInputPanel : Panel {
         pwshProcess = process;
 
         inputBox = new RichTextBox() {
-            Font           = new Font(IniFile.Read("Font", "Arial"), (int)Math.Ceiling(12 / Window.DPI_SCALING)),
+            Font           = new Font(IniFile.Read("Font", "MS Gothic"), (int)Math.Ceiling(12 / Window.DPI_SCALING)),
             Dock           = DockStyle.Fill,
             BorderStyle    = BorderStyle.None,
             ScrollBars     = RichTextBoxScrollBars.None,
@@ -821,7 +821,7 @@ public class PopupForm : Form
         borderPen = new Pen(ColorTranslator.FromHtml(borderColor), BORDER_WIDTH);
         Cursor    = Cursors.Arrow;
 
-        font = new Font(IniFile.Read("Font", "Arial"), (int)(10 / Window.DPI_SCALING));
+        font = new Font(IniFile.Read("Font", "MS Gothic"), (int)(10 / Window.DPI_SCALING));
         Icon = new Icon(AppDomain.CurrentDomain.BaseDirectory + "\\pexe.ico");
 
 

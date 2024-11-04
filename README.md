@@ -21,7 +21,7 @@ PS > C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe /target:winexe /win32
 
 `OutputColums`: Set the output text box columns. Default is 80.
 
-`Font`: Set the font. Default is Arial.
+`Font`: Set the font. Default is MS Gothic.
 
 `WorkingDirectory`: Set the pwsh working directory. Default is the current directory.
 
