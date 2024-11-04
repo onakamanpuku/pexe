@@ -436,7 +436,7 @@ public class PwshProcess: Process {
 
         await StandardInput.WriteLineAsync(
             "$newsize = $(get-host).ui.rawui.buffersize; "
-            + "$newsize.width =" + IniFile.Read("OutputColums", "80") + ";"
+            + "$newsize.width =" + IniFile.Read("OutputColumns", "80") + ";"
             + "$(get-host).ui.rawui.buffersize = $newsize"
         );
 
@@ -546,7 +546,6 @@ public class CmdInputPanel : Panel {
         pwshProcess = process;
 
         inputBox = new RichTextBox() {
-            // Font           = new Font("PlemolJP Console", 12),
             Font           = new Font(IniFile.Read("Font", "Arial"), (int)Math.Ceiling(12 / Window.DPI_SCALING)),
             Dock           = DockStyle.Fill,
             BorderStyle    = BorderStyle.None,
@@ -1098,7 +1097,7 @@ public class PsForm : Form
 
         pwshProcess = new PwshProcess();
 
-        outputForm = new PopupForm(IniFile.ReadInt("OutputColums", 80));
+        outputForm = new PopupForm(IniFile.ReadInt("OutputColumns", 80));
 
         inputPanel = new CmdInputPanel(INPUT_BOX_HEIGHT, pwshProcess) {
             Dock   = DockStyle.Bottom,
