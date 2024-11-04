@@ -1,7 +1,7 @@
 # pexe
 Quick Powershell Executor
 
-![スクリーンショット 2024-11-04 131714](https://github.com/user-attachments/assets/cf5a6d13-4cb1-428c-9b4d-46eb518a2fdf)
+![20241104_042645](https://github.com/user-attachments/assets/2cdb87b3-193c-4b76-8a74-0467802026fa)
 
 
 # Environment
