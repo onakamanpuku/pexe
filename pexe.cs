@@ -145,61 +145,38 @@ public class IniFile
 
 //-----------------------------------------------------------------------------
 
-public class History {
-    static private readonly string   HIST_PATH = IniFile.Read("HistPath", AppDomain.CurrentDomain.BaseDirectory + "\\.pexe_history.txt");
-    static private readonly Encoding ENCODING  = Encoding.GetEncoding("Shift_JIS");
+abstract public class HistoryBase<T> {
+    protected readonly T[] hists;
+    protected int head;
+    protected int tail;
+    protected int cnt;
+    protected int idx;
+    protected int size;
 
-    private readonly string[] hists;
-    private int head;
-    private int tail;
-    private int cnt;
-    private int idx;
-    private int size;
-
-    public History(int sz) {
+    public HistoryBase(int sz) {
         if (sz < 0) {
             throw new InvalidOperationException("hists empty");
         }
         size = sz;
-        hists = new string[size];
+        hists = new T[size];
         head = 0;
         tail = 0;
         cnt  = 0;
         idx  = -1;
-
-        if (File.Exists(HIST_PATH)) {
-            StreamReader reader = new StreamReader(HIST_PATH, ENCODING);
-            for(int i1 = 0; !reader.EndOfStream; i1++) {
-                string  line = reader.ReadLine();
-                this.Add(line);
-            }
-            reader.Close();
-        }
     }
 
-    public void Close() {
-        if ((0 < cnt) && (0 < HIST_PATH.Length)) {
-            StreamWriter writer = new StreamWriter(HIST_PATH, false, ENCODING);
-            for (int i1 = tail; ; i1 = nextIdx(i1)) {
-                writer.WriteLine(hists[i1]);
-                if (i1 == lastIdx) {
-                    break;
-                }
-            }
-            writer.Close();
-        }
-    }
+    protected abstract bool IsEmpty(T entry);
 
-    private int nextIdx(int idx) {
+    protected int nextIdx(int idx) {
         return (idx + 1) % size;
     }
-    private int prevIdx(int idx) {
+    protected int prevIdx(int idx) {
         return (idx - 1 + size) % size;
     }
-    private int lastIdx { get { return prevIdx(head);}}
+    protected int lastIdx { get { return prevIdx(head);}}
 
-    public void Add(string cmd) {
-        if (cmd.Length < 1) {
+    public void Add(T entry) {
+        if (IsEmpty(entry)) {
             return;
         }
 
@@ -210,15 +187,15 @@ public class History {
             tail = nextIdx(tail);
         }
 
-        if (cmd.Equals(hists[lastIdx])) {
+        if (entry.Equals(hists[lastIdx])) {
             return;
         }
 
-        hists[head] = cmd;
+        hists[head] = entry;
         head = nextIdx(head);
     }
 
-    public string Prev() {
+    public T Prev() {
         if (cnt < 1) {
             throw new InvalidOperationException("hists empty");
         }
@@ -236,7 +213,7 @@ public class History {
         return hists[idx];
     }
 
-    public string Next() {
+    public T Next() {
         if (cnt < 1) {
             throw new InvalidOperationException("hists empty");
         }
@@ -246,7 +223,7 @@ public class History {
         }
         else if (idx == lastIdx) {
             idx = -1;
-            return "";
+            return default(T);
         }
         else {
             idx = nextIdx(idx);
@@ -257,6 +234,42 @@ public class History {
 
     public void ResetPos() {
         idx = -1;
+    }
+}
+
+public class History : HistoryBase<string> {
+    static private readonly string   HIST_PATH = IniFile.Read("HistPath", AppDomain.CurrentDomain.BaseDirectory + "\\.pexe_history.txt");
+    static private readonly Encoding ENCODING  = Encoding.GetEncoding("Shift_JIS");
+
+    public History(int sz): base(sz) {
+        if (File.Exists(HIST_PATH)) {
+            StreamReader reader = new StreamReader(HIST_PATH, ENCODING);
+            for(int i1 = 0; !reader.EndOfStream; i1++) {
+                string  line = reader.ReadLine();
+                this.Add(line);
+            }
+            reader.Close();
+        }
+    }
+
+    protected override bool IsEmpty(string entry) {
+        if (entry.Length < 1) {
+            return true;
+        }
+        return false;
+    }
+
+    public void Close() {
+        if ((0 < cnt) && (0 < HIST_PATH.Length)) {
+            StreamWriter writer = new StreamWriter(HIST_PATH, false, ENCODING);
+            for (int i1 = tail; ; i1 = nextIdx(i1)) {
+                writer.WriteLine(hists[i1]);
+                if (i1 == lastIdx) {
+                    break;
+                }
+            }
+            writer.Close();
+        }
     }
 
     public string LastMatch(string prefix) {
@@ -280,6 +293,21 @@ public class History {
         throw new InvalidOperationException("no match");
     }
 }
+
+
+//-----------------------------------------------------------------------------
+public class ResultHist : HistoryBase<List<string>>
+{
+    public ResultHist(int sz = 50) : base(sz) {}
+
+    protected override bool IsEmpty(List<string> entry) {
+        if (entry.Count() < 1) {
+            return true;
+        }
+        return false;
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 public class ColorHandle {
@@ -803,6 +831,8 @@ public class PopupForm : Form
 
     private int    selectIdx = -1;
     private double lineHeight;
+    public delegate void OnKeyDownDeligate();
+    private Dictionary<Keys, OnKeyDownDeligate> onKeyDown = new Dictionary<Keys, OnKeyDownDeligate>();
 
     public PopupForm(
         int    colNum      = 80,
@@ -848,6 +878,12 @@ public class PopupForm : Form
         Paint += OnPaint;
         VisibleChanged += OnVisibleChanged;
         textBox.MouseUp += OnMouseUp;
+        textBox.KeyDown += (s, e) => {
+            if (onKeyDown.ContainsKey(e.KeyCode)) {
+                e.Handled = true;
+                onKeyDown[e.KeyCode]();
+            }
+        };
 
         instances.Add(this);
     }
@@ -887,6 +923,10 @@ public class PopupForm : Form
                 Clipboard.SetText(textBox.SelectedText);
             }
         }
+    }
+
+    public void OnKey(Keys key, OnKeyDownDeligate func) {
+        onKeyDown[key] = func;
     }
 
     public Button ExpandBtn() {
@@ -985,6 +1025,9 @@ public class PopupForm : Form
                 start = -1;
             }
         }
+
+        textBox.SelectionStart  = 0;
+        textBox.SelectionLength = 0;
     }
 
     public void Clear() {
@@ -1062,6 +1105,7 @@ public class PsForm : Form
     private CmdInputPanel inputPanel;
     private PopupForm     outputForm;
     private PwshProcess   pwshProcess;
+    private ResultHist    resultHist;
 
     private Timer         focusCheckTimer;
 
@@ -1094,6 +1138,8 @@ public class PsForm : Form
         TransparencyKey = Color.LightBlue;
         Icon            = new Icon(AppDomain.CurrentDomain.BaseDirectory + "\\pexe.ico");
 
+
+        resultHist = new ResultHist(50);
 
         pwshProcess = new PwshProcess();
 
@@ -1132,7 +1178,26 @@ public class PsForm : Form
             }
         });
 
+        inputPanel.OnKey(Keys.PageUp, (cmd) => { try { refreshOutput(resultHist.Prev()); } catch {}});
+        inputPanel.OnKey(Keys.PageDown, (cmd) => { try { refreshOutput(resultHist.Next()); } catch {}});
+        outputForm.OnKey(Keys.PageUp, () => { try { refreshOutput(resultHist.Prev()); } catch {}});
+        outputForm.OnKey(Keys.PageDown, () => { try { refreshOutput(resultHist.Next()); } catch {}});
+
         pwshProcess.Run();
+    }
+
+    private void refreshOutput(List<string> output) {
+        if ((output != null) && (0 < output.Count())) {
+            outputForm.Clear();
+            foreach (string o in output) {
+                outputForm.AppendColoredLine(o);
+            }
+            outputForm.SetLB(this.Location.X, this.Location.Y + TASK_BAR_OFFSET_OUT, true);
+            outputForm.ScrollTop();
+        }
+        else {
+            resultHist.Prev();
+        }
     }
 
     private async void OnEneter(string cmd) {
@@ -1175,6 +1240,10 @@ public class PsForm : Form
             }
         }
         while (!fin);
+
+        resultHist.Add((new List<string> {"PS > " + cmd}).Concat(pwshProcess.Result).ToList());
+        resultHist.ResetPos();
+        resultHist.Prev();
 
         return;
     }
